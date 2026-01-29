@@ -2,7 +2,7 @@ import 'package:batch_four_exp/features/todo/presentation/add_todo.dart';
 
 import 'package:batch_four_exp/home.dart';
 
-import 'package:batch_four_exp/login_page.dart';
+import 'package:batch_four_exp/features/auth/login_page.dart';
 import 'package:flutter/material.dart';
 
 class RouteGenerator {

@@ -1,4 +1,4 @@
-import 'package:batch_four_exp/login_page.dart';
+import 'package:batch_four_exp/features/auth/login_page.dart';
 import 'package:batch_four_exp/util/route.dart' show RouteGenerator;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';

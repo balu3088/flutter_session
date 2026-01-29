@@ -1,13 +1,17 @@
 import 'dart:convert';
 
+import 'package:batch_four_exp/common/services/shared_pref_config.dart';
 import 'package:batch_four_exp/config/app_config.dart';
 import 'package:http/http.dart' as http;
 
 class HttpClientWrapper {
-  const HttpClientWrapper();
+  final String? baseUrl;
+
+  const HttpClientWrapper({this.baseUrl});
 
   Uri _buildUri(String path, {Map<String, String>? queryParameters}) {
-    final baseUri = Uri.parse(AppConfig.baseUrl);
+    // Use provided baseUrl, otherwise use default from AppConfig
+    final baseUri = Uri.parse(baseUrl ?? AppConfig.baseUrl);
     final resolvedUri = baseUri.resolve(path);
     if (queryParameters == null || queryParameters.isEmpty) {
       return resolvedUri;
@@ -15,17 +19,24 @@ class HttpClientWrapper {
     return resolvedUri.replace(queryParameters: queryParameters);
   }
 
-  Map<String, String> _buildHeaders(
-    Map<String, String>? headers, {
-    String? authorizationToken,
-  }) {
+  Future<Map<String, String>> _buildHeaders() async {
     final mergedHeaders = <String, String>{};
-    if (headers != null) {
-      mergedHeaders.addAll(headers);
+
+    // Get auth token from SharedPreferences
+    String? token;
+    try {
+      final prefs = await SharedPrefConfig.getInstance();
+      token = prefs.getString('authToken');
+    } catch (e) {
+      print('Error getting auth token from SharedPreferences: $e');
     }
-    if (authorizationToken != null && authorizationToken.isNotEmpty) {
-      mergedHeaders['Authorization'] = authorizationToken;
+
+    // Add Bearer token if available
+    mergedHeaders['Content-Type'] = 'application/json';
+    if (token != null && token.isNotEmpty) {
+      mergedHeaders['Authorization'] = 'Bearer $token';
     }
+
     return mergedHeaders;
   }
 
@@ -33,34 +44,23 @@ class HttpClientWrapper {
     String path, {
     Map<String, String>? headers,
     Map<String, String>? queryParameters,
-    String? authorizationToken,
-  }) {
+  }) async {
     final uri = _buildUri(path, queryParameters: queryParameters);
-    final mergedHeaders = _buildHeaders(
-      headers,
-      authorizationToken: authorizationToken,
-    );
+    final mergedHeaders = await _buildHeaders();
     return http.get(uri, headers: mergedHeaders);
   }
 
   Future<http.Response> post(
     String path, {
-    Map<String, String>? headers,
     Map<String, String>? queryParameters,
     Object? body,
-    Encoding? encoding,
-    String? authorizationToken,
-  }) {
+  }) async {
     final uri = _buildUri(path, queryParameters: queryParameters);
-    final mergedHeaders = _buildHeaders(
-      headers,
-      authorizationToken: authorizationToken,
-    );
+    final mergedHeaders = await _buildHeaders();
     return http.post(
       uri,
       headers: mergedHeaders,
       body: body,
-      encoding: encoding,
     );
   }
 }
